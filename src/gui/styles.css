@@ -89,3 +89,23 @@
     -fx-background-color: #1e8449;
     -fx-translate-y: 1;
 }
+
+.cancel-button {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+.cancel-button:hover {
+    -fx-background-color: #c0392b;
+}
+
+.cancel-button:pressed {
+    -fx-background-color: #a93226;
+    -fx-translate-y: 1;
+}

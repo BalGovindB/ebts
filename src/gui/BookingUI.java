@@ -10,6 +10,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
 public class BookingUI extends Application {
     private EventCSVManager eventManager;
@@ -17,6 +18,7 @@ public class BookingUI extends Application {
     private List<Event> events;
     private ListView<String> bookedListView;
     private ListView<String> eventListView;
+    private List<String> rawBookings = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -29,7 +31,6 @@ public class BookingUI extends Application {
         TabPane tabPane = new TabPane();
         tabPane.getStyleClass().add("main-tab-pane");
 
-        // Tab 1: Book Tickets
         Tab bookTab = new Tab("Book Tickets");
         bookTab.setClosable(false);
         VBox bookRoot = new VBox(20);
@@ -127,7 +128,6 @@ public class BookingUI extends Application {
         bookRoot.getChildren().addAll(titleLabel, eventListView, formPane, bookButton);
         bookTab.setContent(bookRoot);
 
-        // Tab 2: My Bookings
         Tab bookedTab = new Tab("My Bookings");
         bookedTab.setClosable(false);
         VBox bookedRoot = new VBox(20);
@@ -141,7 +141,39 @@ public class BookingUI extends Application {
         refreshBookedList();
         bookedListView.getStyleClass().add("event-list");
 
-        bookedRoot.getChildren().addAll(bookedTitle, bookedListView);
+        Button cancelButton = new Button("Cancel Selected Booking");
+        cancelButton.getStyleClass().add("cancel-button");
+        cancelButton.setMaxWidth(Double.MAX_VALUE);
+
+        cancelButton.setOnAction(e -> {
+            int selectedIdx = bookedListView.getSelectionModel().getSelectedIndex();
+            if (selectedIdx < 0) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Please select a booking to cancel.");
+                return;
+            }
+            
+            String rawCSV = rawBookings.get(selectedIdx);
+            String[] parts = rawCSV.split(",");
+            String bookingId = parts[0];
+            int eventId = Integer.parseInt(parts[2]);
+            int quantity = Integer.parseInt(parts[3]);
+
+            bookingManager.removeBooking(bookingId);
+
+            for (Event ev : events) {
+                if (ev.getEventId() == eventId) {
+                    ev.increaseSeats(quantity);
+                    break;
+                }
+            }
+            eventManager.saveEvents(events);
+
+            refreshEventList();
+            refreshBookedList();
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Booking " + bookingId + " cancelled and seats restored.");
+        });
+
+        bookedRoot.getChildren().addAll(bookedTitle, bookedListView, cancelButton);
         bookedTab.setContent(bookedRoot);
 
         tabPane.getTabs().addAll(bookTab, bookedTab);
@@ -167,9 +199,9 @@ public class BookingUI extends Application {
     }
 
     private void refreshBookedList() {
-        List<String> bookings = bookingManager.loadBookings();
+        rawBookings = bookingManager.loadBookings();
         bookedListView.getItems().clear();
-        for (String b : bookings) {
+        for (String b : rawBookings) {
             String[] parts = b.split(",");
             if (parts.length >= 5) {
                 String display = String.format("ID: %-8s | User: %-10s | Event ID: %-3s | Qty: %-3s | Total: $%s", 

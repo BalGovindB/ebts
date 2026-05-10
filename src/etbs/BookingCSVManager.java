@@ -33,4 +33,36 @@ public class BookingCSVManager {
         }
         return bookings;
     }
+
+    public boolean removeBooking(String bookingId) {
+        List<String> lines = new ArrayList<>();
+        boolean found = false;
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String header = br.readLine();
+            if (header != null) lines.add(header);
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    if (line.startsWith(bookingId + ",")) {
+                        found = true;
+                    } else {
+                        lines.add(line);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading bookings: " + e.getMessage());
+        }
+
+        if (found) {
+            try (PrintWriter pw = new PrintWriter(new FileWriter(filePath))) {
+                for (String l : lines) {
+                    pw.println(l);
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing bookings: " + e.getMessage());
+            }
+        }
+        return found;
+    }
 }
