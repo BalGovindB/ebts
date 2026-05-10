@@ -15,6 +15,8 @@ public class BookingUI extends Application {
     private EventCSVManager eventManager;
     private BookingCSVManager bookingManager;
     private List<Event> events;
+    private ListView<String> bookedListView;
+    private ListView<String> eventListView;
 
     @Override
     public void start(Stage primaryStage) {
@@ -24,17 +26,21 @@ public class BookingUI extends Application {
 
         primaryStage.setTitle("ETBS - Event Ticket Booking System");
 
-        VBox root = new VBox(20);
-        root.setPadding(new Insets(30));
-        root.getStyleClass().add("root-pane");
+        TabPane tabPane = new TabPane();
+        tabPane.getStyleClass().add("main-tab-pane");
+
+        // Tab 1: Book Tickets
+        Tab bookTab = new Tab("Book Tickets");
+        bookTab.setClosable(false);
+        VBox bookRoot = new VBox(20);
+        bookRoot.setPadding(new Insets(30));
+        bookRoot.getStyleClass().add("root-pane");
 
         Label titleLabel = new Label("Upcoming Events");
         titleLabel.getStyleClass().add("title-label");
 
-        ListView<String> eventListView = new ListView<>();
-        for (Event e : events) {
-            eventListView.getItems().add(formatEventString(e));
-        }
+        eventListView = new ListView<>();
+        refreshEventList();
         eventListView.getStyleClass().add("event-list");
 
         GridPane formPane = new GridPane();
@@ -54,9 +60,9 @@ public class BookingUI extends Application {
         ageField.setPromptText("Enter your age");
         ageField.getStyleClass().add("text-field");
 
-        TextField seatField = new TextField();
-        seatField.setPromptText("Enter seat number");
-        seatField.getStyleClass().add("text-field");
+        TextField quantityField = new TextField();
+        quantityField.setPromptText("Number of tickets");
+        quantityField.getStyleClass().add("text-field");
 
         formPane.add(new Label("Name:"), 0, 0);
         formPane.add(nameField, 1, 0);
@@ -64,10 +70,10 @@ public class BookingUI extends Application {
         formPane.add(phoneField, 1, 1);
         formPane.add(new Label("Age:"), 0, 2);
         formPane.add(ageField, 1, 2);
-        formPane.add(new Label("Seat:"), 0, 3);
-        formPane.add(seatField, 1, 3);
+        formPane.add(new Label("Tickets:"), 0, 3);
+        formPane.add(quantityField, 1, 3);
 
-        Button bookButton = new Button("Book Ticket");
+        Button bookButton = new Button("Confirm Booking");
         bookButton.getStyleClass().add("book-button");
         bookButton.setMaxWidth(Double.MAX_VALUE);
 
@@ -86,40 +92,61 @@ public class BookingUI extends Application {
                 
                 int phone = Integer.parseInt(phoneField.getText());
                 int age = Integer.parseInt(ageField.getText());
-                int seat = Integer.parseInt(seatField.getText());
+                int quantity = Integer.parseInt(quantityField.getText());
 
                 Event selectedEvent = events.get(selectedIdx);
-                if (selectedEvent.getSeats() <= 0) {
-                    showAlert(Alert.AlertType.WARNING, "Sold Out", "No seats available for this event.");
+                if (selectedEvent.getSeats() < quantity) {
+                    showAlert(Alert.AlertType.WARNING, "Availability Error", "Not enough seats available.");
                     return;
                 }
 
                 User user = new User(name, phone, age);
                 String bookingId = String.valueOf(System.currentTimeMillis() % 100000);
-                Booking booking = new Booking(bookingId, user, selectedEvent, seat, selectedEvent.getPrice());
+                double totalPrice = selectedEvent.getPrice() * quantity;
+                Booking booking = new Booking(bookingId, user, selectedEvent, quantity, totalPrice);
 
                 booking.bookTicket();
-                bookingManager.addBooking(bookingId, user.getName(), selectedEvent.getEventId(), seat, selectedEvent.getPrice());
+                bookingManager.addBooking(bookingId, user.getName(), selectedEvent.getEventId(), quantity, totalPrice);
                 eventManager.saveEvents(events);
 
-                events = eventManager.loadEvents(); 
-                eventListView.getItems().set(selectedIdx, formatEventString(events.get(selectedIdx)));
+                refreshEventList();
+                refreshBookedList();
 
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Booking confirmed! ID: " + bookingId);
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Booking confirmed! ID: " + bookingId + "\nTotal: $" + totalPrice);
                 
                 nameField.clear(); 
                 phoneField.clear(); 
                 ageField.clear(); 
-                seatField.clear();
+                quantityField.clear();
 
             } catch (NumberFormatException ex) {
-                showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values for phone, age, and seat.");
+                showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values.");
             }
         });
 
-        root.getChildren().addAll(titleLabel, eventListView, formPane, bookButton);
+        bookRoot.getChildren().addAll(titleLabel, eventListView, formPane, bookButton);
+        bookTab.setContent(bookRoot);
 
-        Scene scene = new Scene(root, 480, 650);
+        // Tab 2: My Bookings
+        Tab bookedTab = new Tab("My Bookings");
+        bookedTab.setClosable(false);
+        VBox bookedRoot = new VBox(20);
+        bookedRoot.setPadding(new Insets(30));
+        bookedRoot.getStyleClass().add("root-pane");
+
+        Label bookedTitle = new Label("History of Bookings");
+        bookedTitle.getStyleClass().add("title-label");
+
+        bookedListView = new ListView<>();
+        refreshBookedList();
+        bookedListView.getStyleClass().add("event-list");
+
+        bookedRoot.getChildren().addAll(bookedTitle, bookedListView);
+        bookedTab.setContent(bookedRoot);
+
+        tabPane.getTabs().addAll(bookTab, bookedTab);
+
+        Scene scene = new Scene(tabPane, 650, 750);
         
         File cssFile = new File("src/gui/styles.css");
         if (cssFile.exists()) {
@@ -129,6 +156,27 @@ public class BookingUI extends Application {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+    }
+
+    private void refreshEventList() {
+        events = eventManager.loadEvents();
+        eventListView.getItems().clear();
+        for (Event e : events) {
+            eventListView.getItems().add(formatEventString(e));
+        }
+    }
+
+    private void refreshBookedList() {
+        List<String> bookings = bookingManager.loadBookings();
+        bookedListView.getItems().clear();
+        for (String b : bookings) {
+            String[] parts = b.split(",");
+            if (parts.length >= 5) {
+                String display = String.format("ID: %-8s | User: %-10s | Event ID: %-3s | Qty: %-3s | Total: $%s", 
+                        parts[0], parts[1], parts[2], parts[3], parts[4]);
+                bookedListView.getItems().add(display);
+            }
+        }
     }
 
     private String formatEventString(Event e) {

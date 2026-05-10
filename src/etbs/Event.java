@@ -41,12 +41,12 @@ public abstract class Event {
         return price;
     }
 
-    public void decreaseSeats() {
-        if (seats > 0) seats--;
+    public void decreaseSeats(int amount) {
+        if (seats >= amount) seats -= amount;
     }
 
-    public void increaseSeats() {
-        seats++;
+    public void increaseSeats(int amount) {
+        seats += amount;
     }
 
     public abstract String getType();

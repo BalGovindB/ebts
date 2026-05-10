@@ -5,27 +5,33 @@ public class Booking implements Bookable {
     private User user;
     private Event event;
     private Ticket ticket;
+    private int numTickets;
 
-    public Booking(String bookingId, User user, Event event, int seatNumber, double price) {
+    public Booking(String bookingId, User user, Event event, int numTickets, double totalPrice) {
         this.bookingId = bookingId;
         this.user = user;
         this.event = event;
-        this.ticket = new Ticket(Integer.parseInt(bookingId), seatNumber, price);
+        this.numTickets = numTickets;
+        this.ticket = new Ticket(Integer.parseInt(bookingId), numTickets, totalPrice);
     }
 
     @Override
     public void bookTicket() {
-        if (event.getSeats() > 0) {
-            event.decreaseSeats();
-            System.out.println("Ticket booked successfully!");
+        if (event.getSeats() >= numTickets) {
+            event.decreaseSeats(numTickets);
+            System.out.println("Booking successful!");
         } else {
-            System.out.println("No seats available!");
+            System.out.println("Not enough seats available!");
         }
     }
 
     public void cancelBooking() {
-        event.increaseSeats();
+        event.increaseSeats(numTickets);
         System.out.println("Booking cancelled");
+    }
+
+    public int getNumTickets() {
+        return numTickets;
     }
 
     public String getBookingId() {

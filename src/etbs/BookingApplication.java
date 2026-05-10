@@ -27,25 +27,27 @@ public class BookingApplication {
         }
 
         Event selectedEvent = events.get(choice);
-        System.out.print("Enter seat number: ");
-        int seat = sc.nextInt();
+        System.out.print("Enter number of tickets: ");
+        int quantity = sc.nextInt();
 
         String bookingId = String.valueOf(System.currentTimeMillis() % 100000);
-        Booking booking = new Booking(bookingId, user, selectedEvent, seat, selectedEvent.getPrice());
+        double total = selectedEvent.getPrice() * quantity;
+        Booking booking = new Booking(bookingId, user, selectedEvent, quantity, total);
 
-        if (selectedEvent.getSeats() > 0) {
+        if (selectedEvent.getSeats() >= quantity) {
             booking.bookTicket();
-            bookingManager.addBooking(bookingId, user.getName(), selectedEvent.getEventId(), seat, selectedEvent.getPrice());
+            bookingManager.addBooking(bookingId, user.getName(), selectedEvent.getEventId(), quantity, total);
             eventManager.saveEvents(events);
 
             System.out.println("\n--- Booking Details ---");
             System.out.println("Booking ID: " + booking.getBookingId());
             System.out.println("User: " + booking.getUser().getName());
             System.out.println("Event: " + booking.getEvent().getEventName());
-            System.out.println("Seat: " + booking.getTicket().getSeatNumber());
+            System.out.println("Tickets: " + booking.getTicket().getQuantity());
+            System.out.println("Total Price: $" + total);
             System.out.println("Remaining seats for " + selectedEvent.getEventName() + ": " + selectedEvent.getSeats());
         } else {
-            System.out.println("No seats available!");
+            System.out.println("Not enough seats available!");
         }
 
         sc.close();

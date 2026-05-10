@@ -2,12 +2,12 @@ package etbs;
 
 public class Ticket {
     private int ticketId;
-    private int seatNumber;
+    private int quantity;
     private double price;
 
-    public Ticket(int ticketId, int seatNumber, double price) {
+    public Ticket(int ticketId, int quantity, double price) {
         this.ticketId = ticketId;
-        this.seatNumber = seatNumber;
+        this.quantity = quantity;
         this.price = price;
     }
 
@@ -15,8 +15,8 @@ public class Ticket {
         return ticketId;
     }
 
-    public int getSeatNumber() {
-        return seatNumber;
+    public int getQuantity() {
+        return quantity;
     }
 
     public double getPrice() {
