@@ -42,10 +42,10 @@ classDiagram
 
     class User {
         -name: String
-        -phone: int
+        -phone: long
         -age: int
         +getName() String
-        +getPhone() int
+        +getPhone() long
         +getAge() int
     }
 
@@ -60,6 +60,9 @@ classDiagram
 
     class Booking {
         -bookingId: String
+        -user: User
+        -event: Event
+        -ticket: Ticket
         -numTickets: int
         +bookTicket() void
         +cancelBooking() void
@@ -88,6 +91,11 @@ classDiagram
     }
 
     class BookingUI {
+        -eventManager: EventCSVManager
+        -bookingManager: BookingCSVManager
+        -events: List~Event~
+        -bookedListView: ListView~String~
+        -eventListView: ListView~String~
         -rawBookings: List~String~
         +start(primaryStage: Stage) void
         -refreshEventList() void
