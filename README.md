@@ -46,7 +46,7 @@ java -cp out etbs.BookingApplication
 - To add new events, edit `events.csv` following the header format: `id,type,name,date,venue,seats,price`.
 - Bookings are appended to `bookings.csv` in real-time.
 
-- ## Screenshots
+## Screenshots
 
 ### Home Screen
 <img alt="Home" src="https://github.com/user-attachments/assets/8ab42418-9c03-4eb9-9608-80eaefdf1c54" width="700"/>
